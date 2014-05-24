@@ -6,9 +6,18 @@ if [ $(id -u) != "0" ]; then
 printf "Error: You must be root to run this script!"
 exit 1
 fi
+
+LANMMP_PATH=`pwd`
+if [ `echo $LANMMP_PATH | awk -F/ '{print $NF}'` != "lanmmp" ]; then
+clear && echo "Please enter LANMMP script path:"
+read -p "(Default path: ${LANMMP_PATH}/lanmmp):" LANMMP_PATH
+[ -z "$LANMMP_PATH" ] && LANMMP_PATH=$(pwd)/LANMMP
+cd $LANMMP_PATH/
+fi
+
 clear
 echo "#############################################################"
-echo "# Linux + Apache + Nginx + MariaDB + Moodle + PHP Auto Install Script"
+echo "# Linux + Apache + Nginx + MariaDB + PHP Auto Install Script"
 echo "# Env: Redhat/CentOS"
 echo "# Intro: "
 echo "# Version: $(awk '/version/{print $2}' $LANMMP_PATH/Changelog)"
@@ -222,35 +231,35 @@ yum -y install libc-client libc-client-devel libicu-devel
 Extract(){
 local TARBALL_TYPE
 if [ -n $1 ]; then
-SOFTWARE_NAME=`echo $1 | awk -F/ '{print $NF}'`
-TARBALL_TYPE=`echo $1 | awk -F. '{print $NF}'`
-wget -c -t3 -T3 $1 -P $LANMMP_PATH/
-if [ $? != "0" ];then
-rm -rf $LANMMP_PATH/$SOFTWARE_NAME
-wget -c -t3 -T60 $2 -P $LANMMP_PATH/
-SOFTWARE_NAME=`echo $2 | awk -F/ '{print $NF}'`
-TARBALL_TYPE=`echo $2 | awk -F. '{print $NF}'`
-fi
+  SOFTWARE_NAME=`echo $1 | awk -F/ '{print $NF}'`
+  TARBALL_TYPE=`echo $1 | awk -F. '{print $NF}'`
+  wget -c -t3 -T3 $1 -P $LANMMP_PATH/
+   if [ $? != "0" ];then
+     rm -rf $LANMMP_PATH/$SOFTWARE_NAME
+     wget -c -t3 -T60 $2 -P $LANMMP_PATH/
+     SOFTWARE_NAME=`echo $2 | awk -F/ '{print $NF}'`
+     TARBALL_TYPE=`echo $2 | awk -F. '{print $NF}'`
+   fi
 else
-SOFTWARE_NAME=`echo $2 | awk -F/ '{print $NF}'`
-TARBALL_TYPE=`echo $2 | awk -F. '{print $NF}'`
-wget -c -t3 -T3 $2 -P $LANMMP_PATH/ || exit
+  SOFTWARE_NAME=`echo $2 | awk -F/ '{print $NF}'`
+  TARBALL_TYPE=`echo $2 | awk -F. '{print $NF}'`
+  wget -c -t3 -T3 $2 -P $LANMMP_PATH/ || exit
 fi
 EXTRACTED_DIR=`tar tf $LANMMP_PATH/$SOFTWARE_NAME | tail -n 1 | awk -F/ '{print $1}'`
 case $TARBALL_TYPE in
-gz|tgz)
+  gz|tgz)
 tar zxf $LANMMP_PATH/$SOFTWARE_NAME -C $LANMMP_PATH/ && cd $LANMMP_PATH/$EXTRACTED_DIR || return 1
 ;;
-bz2|tbz)
+  bz2|tbz)
 tar jxf $LANMMP_PATH/$SOFTWARE_NAME -C $LANMMP_PATH/ && cd $LANMMP_PATH/$EXTRACTED_DIR || return 1
 ;;
-tar|Z)
+  tar|Z)
 tar xf $LANMMP_PATH/$SOFTWARE_NAME -C $LANMMP_PATH/ && cd $LANMMP_PATH/$EXTRACTED_DIR || return 1
 ;;
 *)
 echo "$SOFTWARE_NAME is wrong tarball type ! "
 esac
-}
+    }
 
 echo "===================== MariaDB Install ===================="
 
@@ -261,12 +270,12 @@ groupadd mysql
 useradd -g mysql -M -s /bin/false mysql
 
 if [ ! -s mariadb-*.tar.gz ]; then
-LATEST_MYSQL_LINK="http://mirrors.scie.in/mariadb/mariadb-10.0.10/kvm-tarbake-jaunty-x86/mariadb-10.0.10.tar.gz"
-BACKUP_MYSQL_LINK="http://www.hnsssy.com/download/software/mariadb-latest.tar.gz"
-Extract ${LATEST_MYSQL_LINK} ${BACKUP_MYSQL_LINK}
+   LATEST_MYSQL_LINK="http://www.hnsssy.com/download/software/mariadb-latest.tar.gz"
+   BACKUP_MYSQL_LINK="https://downloads.mariadb.org/f/mariadb-10.0.11/source/mariadb-10.0.11.tar.gz?serve"
+   Extract ${LATEST_MYSQL_LINK} ${BACKUP_MYSQL_LINK}
 else
-tar -zxf mariadb-*.tar.gz
-cd mariadb-*/
+   tar -zxf mariadb-*.tar.gz
+   cd mariadb-*/
 fi
 
 cmake . \
@@ -305,7 +314,7 @@ sed -i 's,datadir =,datadir = /data/mysql,g' /etc/init.d/mysql
 chkconfig mysql on
 
 if [ ! `grep -iqw /usr/local/mysql/lib /etc/ld.so.conf` ]; then
-echo "/usr/local/mysql/lib" >> /etc/ld.so.conf
+  echo "/usr/local/mysql/lib" >> /etc/ld.so.conf
 fi
 ldconfig
 
@@ -319,71 +328,70 @@ echo "===================== Apache Install ===================="
 
 if [ "$SOFTWARE" != "1" ]; then
 
-echo "---------- Apache ----------"
+   echo "---------- Apache ----------"
 
-cd $LANMMP_PATH/
+   cd $LANMMP_PATH/
 
-if [ ! -s httpd-*.tar.gz ]; then
-LATEST_APACHE_LINK="https://gitcafe.com/wangyan/files/raw/master/httpd-2.2.24.tar.gz"
-BACKUP_APACHE_LINK="http://www.hnsssy.com/download/software/httpd-2.2.24.tar.gz"
-Extract ${LATEST_APACHE_LINK} ${BACKUP_APACHE_LINK}
-else
-tar -zxf httpd-*.tar.gz
-cd httpd-*/
-fi
+     if [ ! -s httpd-*.tar.gz ]; then
+       LATEST_APACHE_LINK="https://gitcafe.com/wangyan/files/raw/master/httpd-2.2.24.tar.gz"
+       BACKUP_APACHE_LINK="http://www.hnsssy.com/download/software/httpd-2.2.24.tar.gz"
+       Extract ${LATEST_APACHE_LINK} ${BACKUP_APACHE_LINK}
+     else
+       tar -zxf httpd-*.tar.gz
+       cd httpd-*/
+     fi
 
-./configure --prefix=/usr/local/apache --enable-mods-shared=most --enable-ssl=shared --with-mpm=prefork
-make && make install
+  ./configure --prefix=/usr/local/apache --enable-mods-shared=most --enable-ssl=shared --with-mpm=prefork
+  make && make install
 
-echo "---------- Apache config ----------"
+  echo "---------- Apache config ----------"
 
-cd $LANMMP_PATH/
+  cd $LANMMP_PATH/
 
-groupadd www
-useradd -g www -M -s /bin/false www
+  groupadd www
+  useradd -g www -M -s /bin/false www
 
-for i in `ls /usr/local/apache/bin/`; do ln -s /usr/local/apache/bin/$i /usr/bin/$i; done
+  for i in `ls /usr/local/apache/bin/`; do ln -s /usr/local/apache/bin/$i /usr/bin/$i; done
 
-cp conf/init.d.httpd /etc/init.d/httpd
-chmod 755 /etc/init.d/httpd
-chkconfig httpd on
+  cp conf/init.d.httpd /etc/init.d/httpd
+  chmod 755 /etc/init.d/httpd
+  chkconfig httpd on
 
-mv /usr/local/apache/conf/httpd.conf /usr/local/apache/conf/httpd.conf.old
-cp conf/httpd.conf /usr/local/apache/conf/httpd.conf
-chmod 644 /usr/local/apache/conf/httpd.conf
+  mv /usr/local/apache/conf/httpd.conf /usr/local/apache/conf/httpd.conf.old
+  cp conf/httpd.conf /usr/local/apache/conf/httpd.conf
+  chmod 644 /usr/local/apache/conf/httpd.conf
 
-mv /usr/local/apache/conf/extra/httpd-mpm.conf /usr/local/apache/conf/extra/httpd-mpm.conf.bak
-cp conf/httpd-mpm.conf /usr/local/apache/conf/extra/httpd-mpm.conf
-chmod 644 /usr/local/apache/conf/extra/httpd-mpm.conf
+  mv /usr/local/apache/conf/extra/httpd-mpm.conf /usr/local/apache/conf/extra/httpd-mpm.conf.bak
+  cp conf/httpd-mpm.conf /usr/local/apache/conf/extra/httpd-mpm.conf
+  chmod 644 /usr/local/apache/conf/extra/httpd-mpm.conf
 
-mkdir /usr/local/apache/conf/vhosts
-chmod 711 /usr/local/apache/conf/vhosts
-mkdir -p $WEBROOT
-cp conf/p.php $WEBROOT
+  mkdir /usr/local/apache/conf/vhosts
+  chmod 711 /usr/local/apache/conf/vhosts
+  mkdir -p $WEBROOT
+  cp conf/p.php $WEBROOT
 
-echo "---------- Apache SSL ----------"
+  echo "---------- Apache SSL ----------"
 
-cd $LANMMP_PATH/
+  cd $LANMMP_PATH/
 
-mkdir /usr/local/apache/conf/ssl
-chmod 711 /usr/local/apache/conf/ssl
-cp conf/server* /usr/local/apache/conf/ssl
-chmod 644 /usr/local/apache/conf/ssl/*
+  mkdir /usr/local/apache/conf/ssl
+  chmod 711 /usr/local/apache/conf/ssl
+  cp conf/server* /usr/local/apache/conf/ssl
+  chmod 644 /usr/local/apache/conf/ssl/*
 
-mv /usr/local/apache/conf/extra/httpd-ssl.conf /usr/local/apache/conf/extra/httpd-ssl.conf.bak
-cp conf/httpd-ssl.conf /usr/local/apache/conf/extra/httpd-ssl.conf
-chmod 644 /usr/local/apache/conf/extra/httpd-ssl.conf
-sed -i 's,WEBROOT,'$WEBROOT',g' /usr/local/apache/conf/extra/httpd-ssl.conf
+  mv /usr/local/apache/conf/extra/httpd-ssl.conf /usr/local/apache/conf/extra/httpd-ssl.conf.bak
+  cp conf/httpd-ssl.conf /usr/local/apache/conf/extra/httpd-ssl.conf
+  chmod 644 /usr/local/apache/conf/extra/httpd-ssl.conf
+  sed -i 's,WEBROOT,'$WEBROOT',g' /usr/local/apache/conf/extra/httpd-ssl.conf
 
-if [ "$SOFTWARE" = "2" ]; then
-sed -i 's,#Include conf/extra/httpd-s,Include conf/extra/httpd-s,g' /usr/local/apache/conf/httpd.conf
-fi
+    if [ "$SOFTWARE" = "2" ]; then
+     sed -i 's,#Include conf/extra/httpd-s,Include conf/extra/httpd-s,g' /usr/local/apache/conf/httpd.conf
+    fi
 
-echo "---------- Apache frontend ----------"
+  echo "---------- Apache frontend ----------"
 
-if [ "$SOFTWARE" = "2" ]; then
-sed -i 's/\#Listen 80/Listen 80/g' /usr/local/apache/conf/httpd.conf
-
+    if [ "$SOFTWARE" = "2" ]; then
+      sed -i 's/\#Listen 80/Listen 80/g' /usr/local/apache/conf/httpd.conf
 cat >/usr/local/apache/conf/extra/httpd-vhosts.conf<<-EOF
 NameVirtualHost *:80
 
@@ -402,30 +410,30 @@ php_admin_value open_basedir "$WEBROOT:/tmp:/proc:/data"
 
 Include /usr/local/apache/conf/vhosts/*.conf
 EOF
-fi
+    fi
 
-echo "---------- Apache backend ----------"
+  echo "---------- Apache backend ----------"
 
-cd $LANMMP_PATH/
+  cd $LANMMP_PATH/
 
-if [ "$SOFTWARE" = "3" ]; then
+    if [ "$SOFTWARE" = "3" ]; then
 
-echo "---------- RPAF Moudle ----------"
+       echo "---------- RPAF Moudle ----------"
 
-if [ ! -s mod_rpaf-*.tar.gz ]; then
-LATEST_RPAF_LINK="https://gitcafe.com/wangyan/files/raw/master/mod_rpaf-0.6.tar.gz"
-BACKUP_RPAF_LINK="http://www.hnsssy.com/download/software/mod_rpaf-latest.tar.gz"
-Extract ${LATEST_RPAF_LINK} ${BACKUP_RPAF_LINK}
-else
-tar zxf mod_rpaf-*.tar.gz
-cd mod_rpaf-*/
-fi
-/usr/local/apache/bin/apxs -i -c -n mod_rpaf-2.0.so mod_rpaf-2.0.c
+       if [ ! -s mod_rpaf-*.tar.gz ]; then
+        LATEST_RPAF_LINK="https://gitcafe.com/wangyan/files/raw/master/mod_rpaf-0.6.tar.gz"
+        BACKUP_RPAF_LINK="http://www.hnsssy.com/download/software/mod_rpaf-latest.tar.gz"
+        Extract ${LATEST_RPAF_LINK} ${BACKUP_RPAF_LINK}
+       else
+        tar zxf mod_rpaf-*.tar.gz
+        cd mod_rpaf-*/
+       fi
+    /usr/local/apache/bin/apxs -i -c -n mod_rpaf-2.0.so mod_rpaf-2.0.c
 
-sed -i 's/\#Listen 127/Listen 127/g' /usr/local/apache/conf/httpd.conf
-sed -i 's/\#LoadModule rpaf/LoadModule rpaf/g' /usr/local/apache/conf/httpd.conf
+    sed -i 's/\#Listen 127/Listen 127/g' /usr/local/apache/conf/httpd.conf
+    sed -i 's/\#LoadModule rpaf/LoadModule rpaf/g' /usr/local/apache/conf/httpd.conf
 
-echo "---------- Backend Config ----------"
+    echo "---------- Backend Config ----------"
 
 cat >/usr/local/apache/conf/extra/httpd-vhosts.conf<<-EOF
 NameVirtualHost 127.0.0.1:8080
@@ -445,8 +453,8 @@ php_admin_value open_basedir "$WEBROOT:/tmp:/proc:/data"
 
 Include /usr/local/apache/conf/vhosts/*.conf
 EOF
-fi
-fi
+     fi
+ fi
 
 echo "===================== PHP5 Install ===================="
 
@@ -855,14 +863,14 @@ rm -rf /usr/local/mysql/data/test/
 echo -e "phpmyadmin\t${PMA_VERSION}" >> version.txt 2>&1
 
 echo "================moodle Install==============="
-rm -rf $WEBROOT/moodle*
+rm -rf $WEBROOT/moodle
 mkdir -p /data
 mkdir -p /data/moodledata
 chown www:www /data/moodledata
 chmod 775 /data/moodledata
 if [ "$M_VERSION" = "1" ]; then
-echo "---------- moodle2.6 ----------"
-cd $LANMMP_PATH/
+     echo "---------- moodle2.6 ----------"
+      cd $LANMMP_PATH/
  if [ ! -s moolde-*-26.tgz ]; then
    LATEST_moodle_LINK="http://download.moodle.org/download.php/stable26/moodle-latest-26.tgz"
    BACKUP_moodle_LINK="http://www.hnsssy.com/download/moodle/moodle-latest-26.tgz"
@@ -892,9 +900,9 @@ chmod 775 $WEBROOT/moodle
 
 cd $LANMMP_PATH/
 if [ ! -d "src/" ];then
-mkdir -p src/
+mkdir -p src
 fi
-\mv ./{*gz,*-*/,*patch,ioncube,package.xml} ./src >/dev/null 2>&1
+mv ./{*gz,*-*/,*patch,ioncube,package.xml} ./src >/dev/null 2>&1
 
 clear
 echo ""
